@@ -1,1 +1,1 @@
-{"labelColorDict": {"bug": "#d73a4a", "documentation": "#0075ca", "duplicate": "#cfd3d7", "enhancement": "#a2eeef", "good first issue": "#7057ff", "help wanted": "#008672", "invalid": "#e4e669", "question": "#d876e3", "wontfix": "#ffffff"}}
+{"P1": {"labels": ["xNix"], "postTitle": "Zabbix+Grafana \u5b9e\u73b0\u76d1\u63a7\u53ef\u89c6\u5316", "postUrl": "post/Zabbix%2BGrafana%20-shi-xian-jian-kong-ke-shi-hua.html", "createdDate": "2025-07-29", "dateLabelColor": "#0969da"}, "labelColorDict": {"xNix": "#60e7c1"}}
