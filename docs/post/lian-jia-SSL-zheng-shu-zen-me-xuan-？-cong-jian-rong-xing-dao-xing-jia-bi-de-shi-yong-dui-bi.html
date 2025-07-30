@@ -87,7 +87,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <p>简单说，如果你的设备需要全链路ECDSA支持（比如对性能敏感的场景），GoGetSSL的Sectigo证书是目前最便宜的选择，就是老设备可能得处理四级证书链；如果不执着于ECDSA，RapidSSL和AlphaSSL更省心——三级证书链足够，老终端兼容性也好，RapidSSL名气大些，AlphaSSL则胜在性价比。</p>
 <p>顺便说句证书链的小知识：现在的SSL证书几乎都是由中级证书签发的（根证书太敏感，不会直接签用户证书），所以三级证书链（根→中级→用户证书）基本是最短的。多一级中级证书的话，服务器会多传约2KB的数据，客户端验证时也得多查一次证书吊销状态，对现代设备影响不大，但老终端可能会慢一点点。</p>
 <p>最后，如果想确认某个根证书在主流浏览器里的信任情况，推荐看看“<a href="https://labs.vjirovsky.cz/cas-info/" rel="nofollow">CAs trustworthy in browsers db</a>”，里面能查到各根证书的信任范围，选的时候心里更有底。</p></div>
-<div style="font-size:small;margin-top:8px;float:right;">This content is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license.</div>
+<div style="font-size:small;margin-top:8px;float:right;">除另有声明的部分外，本网站的文字内容采用 CC BY-NC-SA 4.0授权</div>
 
 <button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
 <div class="comments" id="comments"></div>
