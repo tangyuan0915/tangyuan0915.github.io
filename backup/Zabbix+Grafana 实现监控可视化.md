@@ -23,7 +23,7 @@ yum install -y zabbix-agent
 
 ## 修改配置文件  
 ```bash
-vi /etc/zabbix/zabbix_agentd.conf  # 关键配置项如下
+vi /etc/zabbix/zabbix_agentd.conf 
 ```  
 
 ## 配置核心参数  
