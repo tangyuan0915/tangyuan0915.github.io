@@ -1,103 +1,83 @@
-Grafana 是数据可视化展示平台，可连接包括 Zabbix 在内的多种数据源。Zabbix 是一套企业级的开源监控解决方案，包含监控、报警和数据存储等功能，Zabbix 通过 Agent 从监控对象收集数据，存储在自身数据库中，Grafana 从 Zabbix 查询数据并进行可视化展示。
-监控中数据获取有主动监控和被动监控两种方式：
-主动监控是 Zabbix Agent 主动向 Zabbix Server 发送数据，监控对象需要知道 Zabbix Server 的地址和端口。好处是能减轻 Zabbix Server 的负载，适合大规模监控场景；坏处是监控对象配置相对复杂，且 Zabbix Server 不易发现监控对象离线；麻烦是每个监控对象都要配置 Zabbix Server 信息。
-被动监控是 Zabbix Server 主动向 Zabbix Agent 请求数据，Zabbix Server 需要知道监控对象的地址和端口，监控对象开放端口供 Zabbix Server 访问。好处是监控对象配置简单，Zabbix Server 容易发现监控对象离线，便于集中管理；坏处是当监控对象较多时，会增加 Zabbix Server 的负载；麻烦是 Zabbix Server 需要维护监控对象列表。
-监控对象（客户端）
-Zabbix Agent 是 Zabbix 官方提供的客户端程序，用于收集监控对象的各类数据。
-Linux 系统安装 Zabbix Agent：
-```
-# 安装 Zabbix 源
-rpm -Uvh https://repo.zabbix.com/zabbix/6.0/rhel/7/x86_64/zabbix-release-6.0-2.el7.noarch.rpm
+Grafana 是一款专业的数据可视化展示平台，能对接包括 Zabbix 在内的多种数据源；Zabbix 则是企业级开源监控解决方案，集成了监控、报警及数据存储等功能。二者配合时，Zabbix 通过 Agent 从监控对象收集数据并存储在自身数据库，Grafana 从 Zabbix 中查询数据并进行可视化呈现。
+
+
+监控中数据获取分为主动监控和被动监控两种模式：  
+- **主动监控**：Zabbix Agent 主动向 Zabbix Server 发送数据，监控对象需知晓 Zabbix Server 的地址与端口。优势在于可减轻 Zabbix Server 的负载，适合大规模监控场景；但监控对象配置相对复杂，且 Zabbix Server 较难发现监控对象离线，需为每个监控对象单独配置 Zabbix Server 信息。  
+- **被动监控**：Zabbix Server 主动向 Zabbix Agent 请求数据，Zabbix Server 需掌握监控对象的地址与端口，且监控对象需开放端口供 Zabbix Server 访问。优势是监控对象配置简单，Zabbix Server 易发现监控对象离线，便于集中管理；但监控对象较多时会增加 Zabbix Server 负载，且需由 Zabbix Server 维护监控对象列表。  
+
+
+监控对象（客户端）需部署 Zabbix Agent，这是 Zabbix 官方提供的客户端程序，用于收集监控对象的各类数据。
+
+
+# Linux 系统安装 Zabbix Agent 步骤  
+## 安装 Zabbix 源  
+```bash
+rpm -Uvh https://repo.zabbix.com/zabbix/6.0/rhel/7/x86_64/zabbix-release-6.0-2.el7.noarch.rpm  # 根据系统版本调整，此处以 RHEL 7 为例
 yum clean all
-```
-# 安装 Zabbix Agent
-`yum install -y zabbix-agent`
-# 修改配置文件
-`vi /etc/zabbix/zabbix_agentd.conf`
-# 配置 Zabbix Server 地址
-`Server=192.168.1.100`
-# 配置主动模式下 Zabbix Server 地址
-`ServerActive=192.168.1.100`
-# 配置主机名（需与 Zabbix Server 中配置一致）
-`Hostname=Linux-Server-01`
-# 启动并设置开机自启
-```
+```  
+
+## 安装 Zabbix Agent  
+```bash
+yum install -y zabbix-agent
+```  
+
+## 修改配置文件  
+```bash
+vi /etc/zabbix/zabbix_agentd.conf  # 关键配置项如下
+```  
+
+## 配置核心参数  
+- 被动模式下 Zabbix Server 地址：`Server=192.168.1.100`（允许该地址的 Server 拉取数据）  
+- 主动模式下 Zabbix Server 地址：`ServerActive=192.168.1.100`（Agent 主动推送数据的目标地址）  
+- 主机名（需与 Zabbix Server 中配置完全一致）：`Hostname=Linux-Server-01`  
+
+
+## 启动并设置开机自启  
+```bash
 systemctl start zabbix-agent
-systemctl enable zabbix-agent
-```
+systemctl enable zabbix-agent  # 确保服务开机自动运行
+```  
 
-Windows 系统安装 Zabbix Agent：
-从 Zabbix 官网下载对应版本的 Zabbix Agent 安装包，运行安装程序，按照提示进行安装。安装完成后，修改配置文件 zabbix_agentd.conf，配置 Server、ServerActive 和 Hostname 等参数，然后启动 Zabbix Agent 服务，并设置为开机自启。
-监控系统（服务端）
-先安装 Docker 和 Docker Compose V2，然后通过容器部署 Zabbix Server、Zabbix Database 和 Grafana。为简单起见，暂不考虑复杂的安全配置和服务发现机制。
-创建相关目录并设置权限：
-```
-mkdir zabbix-server
-mkdir zabbix-db
-mkdir grafana
-sudo chown 1000:1000 zabbix-server/
-sudo chown 999:999 zabbix-db/
-sudo chown 472:0 grafana/
-```
 
-编辑 docker-compose.yml：
-```
+# Grafana 容器部署配置（Docker Compose 示例）  
+```yaml
+version: '3'
 services:
-  zabbix-db:
-    image: mysql:8.0
-    container_name: zabbix-db
-    restart: always
-    volumes:
-      - ./zabbix-db:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=zabbixroot
-      - MYSQL_DATABASE=zabbix
-      - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=zabbixpass
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-
-  zabbix-server:
-    image: zabbix/zabbix-server-mysql:6.0
-    container_name: zabbix-server
-    restart: always
-    depends_on:
-      - zabbix-db
-    volumes:
-      - ./zabbix-server:/usr/lib/zabbix/alertscripts
-    environment:
-      - DB_SERVER_HOST=zabbix-db
-      - MYSQL_DATABASE=zabbix
-      - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=zabbixpass
-      - MYSQL_ROOT_PASSWORD=zabbixroot
-    ports:
-      - 10051:10051
-
   grafana:
     image: grafana/grafana
     container_name: grafana
     restart: always
     ports:
-      - 3000:3000
+      - 3000:3000  # 映射 Grafana 端口到主机
     volumes:
-      - ./grafana:/var/lib/grafana
+      - ./grafana:/var/lib/grafana  # 持久化存储 Grafana 数据
     environment:
-      - GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app
-      - GF_SECURITY_ADMIN_PASSWORD=zabbix123
-      - GF_SERVER_ENABLE_GZIP=true
+      - GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app  # 自动安装 Zabbix 插件
+      - GF_SECURITY_ADMIN_PASSWORD=zabbix123  # 初始管理员密码，建议生产环境修改为复杂密码
+      - GF_SERVER_ENABLE_GZIP=true  # 启用 GZIP 压缩提升性能
     depends_on:
-      - zabbix-server
-```
+      - zabbix-server  # 依赖 Zabbix Server 服务
+```  
 
-启动容器：
-`docker compose up -d`
 
-配置 Zabbix Server
-访问 Zabbix Web 界面（默认地址为 http:// 服务器 IP/zabbix），使用默认用户名 Admin 和密码 zabbix 登录。
-进入 “配置”->“主机”，点击 “创建主机”，填写主机名称（与 Agent 配置中的 Hostname 一致）、可见名称和 IP 地址等信息，然后在 “模板” 选项卡中关联合适的模板（如 Template OS Linux），点击 “添加” 完成主机添加。
-配置 Grafana
-用 admin 和默认密码（GF_SECURITY_ADMIN_PASSWORD）登录 Grafana（默认地址为 http:// 服务器 IP:3000）。
-进入 “插件”，找到已安装的 Zabbix 插件并启用。
-进入 “配置”->“数据源”，点击 “添加数据源”，选择 Zabbix，配置 Zabbix 服务器[URL](http://zabbix-server/zabbix/api_jsonrpc.php)，输入 Zabbix 的用户名和密码，点击 “保存 & 测试”。
-进入 “仪表盘”->“导入”，输入 Zabbix 相关的仪表盘 ID（如 8321），选择已配置的 Zabbix 数据源，完成仪表盘导入。
-至此，一个简单的 Zabbix+Grafana 监控可视化平台就搭建完成了。在生产环境中，还需要考虑数据库备份、安全加固（如启用 HTTPS、设置复杂密码等）、Zabbix 代理的部署以分担 Server 压力等。
+# 配置 Zabbix Server  
+1. 访问 Zabbix Web 界面（默认地址：http://[服务器IP]/zabbix），使用默认账号 `Admin`、密码 `zabbix` 登录（首次登录建议立即修改密码）。  
+2. 进入「配置」→「主机」，点击「创建主机」：  
+   - 填写主机名称（需与 Agent 配置的 `Hostname` 完全一致）、可见名称及 IP 地址。  
+   - 切换到「模板」选项卡，关联合适的监控模板（如 `Template OS Linux` 用于监控 Linux 系统）。  
+3. 点击「添加」完成主机配置。  
+
+
+# 配置 Grafana  
+1. 登录 Grafana（默认地址：http://[服务器IP]:3000），使用账号 `admin` 和上述 `GF_SECURITY_ADMIN_PASSWORD` 配置的密码登录。  
+2. 启用 Zabbix 插件：进入「插件」，找到已安装的 `Zabbix` 插件并启用。  
+3. 配置数据源：  
+   - 进入「配置」→「数据源」，点击「添加数据源」，选择 `Zabbix`。  
+   - 配置 Zabbix 服务器 URL：`http://zabbix-server/zabbix/api_jsonrpc.php`（若 Zabbix 与 Grafana 不在同一容器网络，需替换为实际 IP）。  
+   - 输入 Zabbix 的登录用户名和密码，点击「保存 & 测试」确认连接正常。  
+4. 导入仪表盘：  
+   - 进入「仪表盘」→「导入」，输入 Zabbix 相关仪表盘 ID（如 `8321`，可在 Grafana 官方仪表盘库查询更多）。  
+   - 选择已配置的 Zabbix 数据源，完成导入。  
+
+
+至此，基础的 Zabbix+Grafana 监控可视化平台搭建完成。生产环境中，还需补充：数据库定期备份、安全加固（如启用 HTTPS、设置复杂密码、限制访问 IP）、Zabbix Proxy 部署以分担 Server 压力，以及监控指标精细化配置（如自定义监控项、调整采集频率）等。
